@@ -1,0 +1,13 @@
+CREATE TABLE "train_messages" (
+    event_id string PRIMARY KEY,
+    county_no TEXT,
+    deleted BOOLEAN,
+    external_description TEXT,
+    geometry_sweref99_tm TEXT,
+    geometry_wgs84 TEXT,
+    header TEXT,
+    start_date_time DATETIME,
+    prognosticated_end_date_time_traffic_impact DATETIME,
+    last_update_date_time DATETIME,
+    modified_time DATETIME
+);

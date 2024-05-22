@@ -5,6 +5,7 @@
 *.dylib
 *.test
 *.out
+*.log
 go.work
 test/
 config/config.json
