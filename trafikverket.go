@@ -20,7 +20,7 @@ import (
 	"github.com/wbergg/trafikverket-bot/db"
 )
 
-type TRVAPIResponse struct {
+type APIRespTMsg struct {
 	Response struct {
 		Result []struct {
 			TrainMessage []struct {
@@ -55,7 +55,7 @@ type TRVAPIResponse struct {
 	} `json:"RESPONSE"`
 }
 
-type TRVAPITrainStationResponse struct {
+type APIRespTstation struct {
 	Response struct {
 		Result []struct {
 			TrainStation []struct {
@@ -125,7 +125,7 @@ func main() {
 	// Check if DB is set up, if not, set it up (first time only)
 	if d.Setup == 0 {
 		fmt.Println("Looks like it's the first time - Populating DB...")
-		dbSetup(config.TrafikverketAPIKey, tg, &d)
+		dbSetup(&d)
 		fmt.Println("DB population sucess! Please rerun the program!")
 		os.Exit(0)
 	}
@@ -137,13 +137,13 @@ func main() {
 		os.Exit(0)
 	} else {
 		// Poll and diff data from categories
-		data := getData(config.TrafikverketAPIKey, tg, &d)
-		updateData(config.TrafikverketAPIKey, tg, &d, data)
+		data := getData()
+		updateData(tg, &d, data)
 	}
 }
 
-func dbSetup(apikey string, t message.Message, d *db.DBobject) {
-	data := getData(apikey, t, d)
+func dbSetup(d *db.DBobject) {
+	data := getData()
 
 	for _, response := range data.Response.Result {
 		for _, result := range response.TrainMessage {
@@ -157,13 +157,12 @@ func dbSetup(apikey string, t message.Message, d *db.DBobject) {
 						panic(err)
 					}
 				}
-
 			}
 		}
 	}
 }
 
-func getData(apikey string, t message.Message, d *db.DBobject) TRVAPIResponse {
+func getData() APIRespTMsg {
 	//Set up logging
 	f, err := os.OpenFile("trafikverket-log.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -212,7 +211,7 @@ func getData(apikey string, t message.Message, d *db.DBobject) TRVAPIResponse {
 
 	defer resp.Body.Close()
 
-	var data TRVAPIResponse
+	var data APIRespTMsg
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		panic(err)
@@ -221,7 +220,7 @@ func getData(apikey string, t message.Message, d *db.DBobject) TRVAPIResponse {
 	return data
 }
 
-func updateData(apikey string, t message.Message, d *db.DBobject, data TRVAPIResponse) {
+func updateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 	for _, response := range data.Response.Result {
 		for _, result := range response.TrainMessage {
 			for _, reason := range result.ReasonCode {
@@ -230,7 +229,7 @@ func updateData(apikey string, t message.Message, d *db.DBobject, data TRVAPIRes
 					continue
 				} else {
 					//Used for debug:
-					//fmt.Println(result.EventID)
+					fmt.Println(result.EventID)
 					_, err := d.GetMessagesByPid(result.EventID)
 					if err == sql.ErrNoRows {
 						err := d.InsertDBTrainMessage(result.EventID, result.CountyNo[0], result.Deleted, result.ExternalDescription, result.Geometry.Sweref99Tm, result.Geometry.Wgs84, result.Header, result.StartDateTime, result.PrognosticatedEndDateTimeTrafficImpact, result.LastUpdateDateTime, result.ModifiedTime)
@@ -316,7 +315,7 @@ func getStationName(shortname string) string {
 
 	defer resp.Body.Close()
 
-	var data TRVAPITrainStationResponse
+	var data APIRespTstation
 	var stationname string
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
