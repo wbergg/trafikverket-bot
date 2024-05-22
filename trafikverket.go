@@ -18,6 +18,7 @@ import (
 	"github.com/wbergg/bordershop-bot/tele"
 	"github.com/wbergg/trafikverket-bot/config"
 	"github.com/wbergg/trafikverket-bot/db"
+	"github.com/wbergg/trafikverket-bot/helper"
 )
 
 type APIRespTMsg struct {
@@ -51,17 +52,6 @@ type APIRespTMsg struct {
 				LastUpdateDateTime                     time.Time `json:"LastUpdateDateTime"`
 				ModifiedTime                           time.Time `json:"ModifiedTime"`
 			} `json:"TrainMessage"`
-		} `json:"RESULT"`
-	} `json:"RESPONSE"`
-}
-
-type APIRespTstation struct {
-	Response struct {
-		Result []struct {
-			TrainStation []struct {
-				AdvertisedLocationName string `json:"AdvertisedLocationName"`
-				LocationSignature      string `json:"LocationSignature"`
-			} `json:"TrainStation"`
 		} `json:"RESULT"`
 	} `json:"RESPONSE"`
 }
@@ -245,13 +235,13 @@ func updateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 						message = message + "\n*Prognos klart:* " + result.PrognosticatedEndDateTimeTrafficImpact.String()
 						message = message + "\n\n*Orsak:* " + result.Header
 						message = message + "\n\n*Information:* " + result.ExternalDescription
-						message = message + "\n\n*Google Maps:* https://maps.google.com/maps/place/" + fixCords(result.Geometry.Wgs84)
+						message = message + "\n\n*Google Maps:* https://maps.google.com/maps/place/" + helper.FixCords(result.Geometry.Wgs84)
 
 						// Loop through affected stations and look them up
 						var stationNames []string
 						for _, location := range result.TrafficImpact {
 							for _, station := range location.AffectedLocation {
-								stationNames = append(stationNames, getStationName(station.LocationSignature))
+								stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
 							}
 						}
 						// Reduce spam, only post affected stations if <30 and !0
@@ -280,60 +270,4 @@ func updateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 			}
 		}
 	}
-}
-
-func getStationName(shortname string) string {
-	url := "https://api.trafikinfo.trafikverket.se/v2/data.json"
-	query := fmt.Sprintf(`<REQUEST>
-	<LOGIN authenticationkey="%s"></LOGIN>
-	  <QUERY
-		objecttype="TrainStation"
-		schemaversion="1.4">
-		<INCLUDE>AdvertisedLocationName</INCLUDE>
-		<INCLUDE>LocationSignature</INCLUDE>
-		 <FILTER>
-			<EQ name="LocationSignature" value="%s" />
-		 </FILTER>
-	  </QUERY>
-	</REQUEST>`, config.Loaded.TrafikverketAPIKey, shortname)
-
-	byteQuery := []byte(query)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(byteQuery))
-	req.Header.Add("Content-Type", "application/xml")
-	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36")
-	if err != nil {
-		panic(err)
-	}
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-
-	defer resp.Body.Close()
-
-	var data APIRespTstation
-	var stationname string
-
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		panic(err)
-	}
-	for _, result := range data.Response.Result {
-		for _, name := range result.TrainStation {
-			stationname = name.AdvertisedLocationName
-		}
-	}
-
-	return stationname
-}
-
-func fixCords(wsg84 string) string {
-	// Remove unessecary chars from the input string
-	cords := strings.TrimPrefix(strings.TrimSuffix(wsg84, ")"), "POINT (")
-	splitCords := strings.Split(cords, " ")
-	// Return opposite direction of cords
-	return splitCords[1] + "," + splitCords[0]
 }
