@@ -14,12 +14,9 @@ import (
 )
 
 func main() {
-	var debug_telegram *bool
-	var debug_stdout *bool
-
 	// Enable bool debug flag
-	debug_telegram = flag.Bool("debug", false, "Turns on debug for telegram")
-	debug_stdout = flag.Bool("stdout", false, "Turns on stdout rather than sending to telegram")
+	debugTelegram := flag.Bool("debug", false, "Turns on debug for telegram")
+	debugStdout := flag.Bool("stdout", false, "Turns on stdout rather than sending to telegram")
 	telegramTest := flag.Bool("telegram-test", false, "Sends a test message to specified telegram channel")
 	configFile := flag.String("config-file", "./config/config.json", "Absolute path for config-file")
 	flag.Parse()
@@ -38,8 +35,8 @@ func main() {
 	}
 
 	// Initiate telegram
-	tg := tele.New(config.Telegram.TgAPIKey, channel, *debug_telegram, *debug_stdout)
-	tg.Init(*debug_telegram)
+	tg := tele.New(config.Telegram.TgAPIKey, channel, *debugTelegram, *debugStdout)
+	tg.Init(*debugTelegram)
 
 	// Setup db
 	d := db.Open()
