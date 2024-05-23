@@ -17,9 +17,9 @@ type Config struct {
 
 var Loaded Config
 
-func LoadConfig() (Config, error) {
+func LoadConfig(filepath string) (Config, error) {
 	var c Config
-	data, err := os.ReadFile("./config/config.json")
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return Config{}, err
 	}

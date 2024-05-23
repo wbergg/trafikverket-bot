@@ -21,11 +21,11 @@ func main() {
 	debug_telegram = flag.Bool("debug", false, "Turns on debug for telegram")
 	debug_stdout = flag.Bool("stdout", false, "Turns on stdout rather than sending to telegram")
 	telegramTest := flag.Bool("telegram-test", false, "Sends a test message to specified telegram channel")
-
+	configFile := flag.String("config-file", "./config/config.json", "Absolute path for config-file")
 	flag.Parse()
 
 	// Load config
-	config, err := config.LoadConfig()
+	config, err := config.LoadConfig(*configFile)
 	if err != nil {
 		log.Error(err)
 		panic("Could not load config, check config/config.json")
