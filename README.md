@@ -37,7 +37,7 @@ go run trafikverket.go
 If you want to specify a location for the config file, start with:
 
 ```
-go run trafikverket.go -config-file string /path
+go run trafikverket.go -config-file /path
 ```
 
 
