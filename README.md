@@ -34,6 +34,12 @@ To keep track on updates it's recommended to use for example crontab to run the 
 go run trafikverket.go
 ```
 
+If you want to specify a location for the config file, start with:
+
+```
+go run trafikverket.go -config-file string /path
+```
+
 
 ### DEBUG mode
 ```
@@ -49,9 +55,10 @@ go run trafikverket.go
 
 ## Roadmap
 
-- [x] Add support for other file location for config-file
+- [X] Add support for other file location for config-file
 - [ ] Fix update function posting updates to ongoing events
 - [ ] Fix deletion when ongoing event are cleared
-- [ ] Improve station lookup function
+- [ ] Document and clean up code
+- [X] Add function for bulk station lookup function
+- [X] Fix affected stations print
 - [ ] Change to html when sent to Telegram for support of embedded images
-- [ ] Fix affected stations print

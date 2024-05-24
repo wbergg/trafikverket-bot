@@ -146,7 +146,7 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 				} else {
 					// Used for debug:
 					fmt.Println(result.EventID)
-					_, err := d.GetMessagesByPid(result.EventID)
+					dbresp, err := d.GetMessagesByPid(result.EventID)
 					// If no row with eventID found in the DB
 					if err == sql.ErrNoRows {
 						err := d.InsertDBTrainMessage(result.EventID, result.CountyNo[0], result.Deleted, result.ExternalDescription, result.Geometry.Sweref99Tm, result.Geometry.Wgs84, result.Header, result.StartDateTime, result.PrognosticatedEndDateTimeTrafficImpact, result.LastUpdateDateTime, result.ModifiedTime)
@@ -166,31 +166,34 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 
 						// Loop through affected stations and look them up
 						var stationNames []string
+						var isConfirmed bool
 						for _, location := range result.TrafficImpact {
-							for _, station := range location.AffectedLocation {
-								stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
+							isConfirmed = location.IsConfirmed
+							// Om impact är confirmed
+							if location.IsConfirmed {
+								for _, station := range location.AffectedLocation {
+									stationNames = append(stationNames, station.LocationSignature)
+									//stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
+
+								}
 							}
 						}
-						// Reduce spam, only post affected stations if <30 and !0
-						if len(stationNames) < 30 && len(stationNames) != 0 {
+						stationNames = helper.GetStationNameAll(stationNames)
+
+						// Reduce spam, only post affected stations if <60 and !0
+						if len(stationNames) < 60 && len(stationNames) != 0 {
 							message = message + "\n\n*Stationer som påverkas:* "
 							message = message + strings.Join(stationNames, ", ")
+						} else if !isConfirmed {
+							message = message + "\n\n*Stationer som påverkas:* Ej confirmed"
 						}
 
 						// Send message
 						t.SendM(message)
 
 					} else {
-						// Fix later, not in use atm
-						/*
-							fmt.Println(dbresp.ModifiedTime, result.ModifiedTime)
-							if result.ModifiedTime.After(dbresp.ModifiedTime) {
-								fmt.Println("new update time is newer than db")
-								fmt.Println(result.ExternalDescription)
-							} else {
-								fmt.Println("no change")
-							}
-						*/
+						// Fix later
+						fmt.Println("--------")
 						continue
 					}
 				}
