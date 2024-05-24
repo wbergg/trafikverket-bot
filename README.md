@@ -10,7 +10,7 @@ Why not.
 
 ### Prerequisites
 
-You need an APIkey from Trafikverket Open API which can be obtained by creating an account at: https://data.trafikverket.se/oauth2/Account/register
+You need an APIkey from the Trafikverket Open API which can be obtained by creating an account at: https://data.trafikverket.se/oauth2/Account/register
 
 ## Getting Started
 
@@ -28,7 +28,7 @@ To run this program you need at least Go version 1.22. You also need to create a
 
 ## Usage
 
-To keep track on updates it's recommended to use for example crontab to run the program once every fifth minute.
+To keep track of updates it's recommended to use for example crontab to run the program once every fifth minute.
 
 ```
 go run trafikverket.go

@@ -169,19 +169,21 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 						var isConfirmed bool
 						for _, location := range result.TrafficImpact {
 							isConfirmed = location.IsConfirmed
-							// Om impact är confirmed
+							// If impact is confirmed
 							if location.IsConfirmed {
 								for _, station := range location.AffectedLocation {
-									stationNames = append(stationNames, station.LocationSignature)
-									//stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
-
+									// Should station be informed?
+									if station.ShouldBeTrafficInformed {
+										stationNames = append(stationNames, station.LocationSignature)
+										//stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
+									}
 								}
 							}
 						}
 						stationNames = helper.GetStationNameAll(stationNames)
 
-						// Reduce spam, only post affected stations if <60 and !0
-						if len(stationNames) < 60 && len(stationNames) != 0 {
+						// Reduce spam, only post affected stations if <30 and !0
+						if len(stationNames) < 30 && len(stationNames) != 0 {
 							message = message + "\n\n*Stationer som påverkas:* "
 							message = message + strings.Join(stationNames, ", ")
 						} else if !isConfirmed {
@@ -192,9 +194,8 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 						t.SendM(message)
 
 					} else {
-						// Fix later
+
 						fmt.Println("--------")
-						continue
 					}
 				}
 			}
