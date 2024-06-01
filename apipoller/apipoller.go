@@ -140,7 +140,7 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 	for _, response := range data.Response.Result {
 		for _, result := range response.TrainMessage {
 			for _, reason := range result.ReasonCode {
-				if reason.Description == "banarbete" || reason.Description == "passkontroll" {
+				if reason.Description == "banarbete" || reason.Description == "passkontroll" || reason.Code == "OMÄ02" {
 					// Ignore these reasons by continuing
 					continue
 				} else {
@@ -194,7 +194,6 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 						t.SendM(message)
 
 					} else {
-
 						fmt.Println("--------")
 					}
 				}
