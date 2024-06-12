@@ -146,7 +146,7 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 				} else {
 					// Used for debug:
 					fmt.Println(result.EventID)
-					dbresp, err := d.GetMessagesByPid(result.EventID)
+					_, err := d.GetMessagesByPid(result.EventID)
 					// If no row with eventID found in the DB
 					if err == sql.ErrNoRows {
 						err := d.InsertDBTrainMessage(result.EventID, result.CountyNo[0], result.Deleted, result.ExternalDescription, result.Geometry.Sweref99Tm, result.Geometry.Wgs84, result.Header, result.StartDateTime, result.PrognosticatedEndDateTimeTrafficImpact, result.LastUpdateDateTime, result.ModifiedTime)
@@ -158,7 +158,6 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 						message = message + "\n\n*Ny trafikhändelse!*\n"
 						message = message + "\n*Län:* " + CountyMap[result.CountyNo[0]]
 						message = message + "\n*Starttid:* " + result.StartDateTime.String()
-						//message = message + "\n*Senast uppdaterad:* " + result.LastUpdateDateTime.String()
 						message = message + "\n*Prognos klart:* " + result.PrognosticatedEndDateTimeTrafficImpact.String()
 						message = message + "\n\n*Orsak:* " + result.Header
 						message = message + "\n\n*Information:* " + result.ExternalDescription
@@ -175,7 +174,6 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 									// Should station be informed?
 									if station.ShouldBeTrafficInformed {
 										stationNames = append(stationNames, station.LocationSignature)
-										//stationNames = append(stationNames, helper.GetStationName(station.LocationSignature))
 									}
 								}
 							}
@@ -190,10 +188,54 @@ func UpdateData(t message.Message, d *db.DBobject, data APIRespTMsg) {
 							message = message + "\n\n*Stationer som påverkas:* Ej confirmed"
 						}
 
-						// Send message
-						t.SendM(message)
+						// Send message if no county filter is applied
+						if config.Loaded.County[0] == 0 {
+							t.SendM(message)
+						} else {
+							// Create a map
+							countySet := make(map[int]struct{})
+							for _, c := range config.Loaded.County {
+								countySet[c] = struct{}{}
+							}
+
+							// Check if any county matches
+							for _, resultCounty := range result.CountyNo {
+								if _, found := countySet[resultCounty]; found {
+									t.SendM(message)
+									break
+								}
+							}
+						}
 
 					} else {
+						// Future use code to handle updates
+						/*
+							// Check if item has a new update time
+							if result.ModifiedTime.After(dbresp.ModifiedTime) {
+								fmt.Printf("Prognostid ")
+								fmt.Println(dbresp.PrognosticatedEndDateTimeTrafficImpact, result.PrognosticatedEndDateTimeTrafficImpact)
+								fmt.Printf("Last update ")
+								fmt.Println(dbresp.LastUpdateDateTime, result.LastUpdateDateTime)
+
+								fmt.Printf("dbresp är: %s", dbresp.ExternalDescription.String)
+								fmt.Printf("\nresult är: %s", result.ExternalDescription)
+								fmt.Printf("\n")
+								// Check change in external description field
+								if dbresp.ExternalDescription.String != result.ExternalDescription {
+									fmt.Println("update in text")
+
+									// Update DB
+									// uppdatera fält
+									// ExternalDescription
+									// Send update msg to TeleG
+									//message = message + "\n*Senast uppdaterad:* " + result.LastUpdateDateTime.String()
+
+								} else {
+									fmt.Println("no change")
+								}
+
+							}
+						*/
 						fmt.Println("--------")
 					}
 				}

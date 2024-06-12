@@ -13,6 +13,7 @@ type TGCreds struct {
 type Config struct {
 	Telegram           TGCreds `json:"Telegram"`
 	TrafikverketAPIKey string  `json:"TrafikverketAPIKey"`
+	County             []int   `json:"County"`
 }
 
 var Loaded Config
